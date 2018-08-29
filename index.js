@@ -1,7 +1,13 @@
 const express = require("express");
 const multer = require('multer');
+var bodyParser = require('body-parser');
 const app = express();
 const fs = require('fs');
+
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
+app.use(bodyParser.json());
 
 const PORT = process.env.SHARE_PORT || 3000;
 const HOSTNAME = process.env.SHARE_HOST || `http://localhost:${PORT}/`;
@@ -40,6 +46,10 @@ app.get('/',function(req,res){
     res.sendFile(__dirname + "/index.html");
 });
 
+app.get('/delete',function(req,res){
+    res.sendFile(__dirname + "/delete.html");
+});
+
 app.get('/uploads/:fileName', function(req, res) {
     const filePath = __dirname + "/uploads/" + req.params.fileName;
     if (fs.existsSync(filePath)) {
@@ -49,8 +59,16 @@ app.get('/uploads/:fileName', function(req, res) {
     }
 });
 
-app.delete('/uploads/:fileName',function(req,res) {
-    const filePath = __dirname + "/uploads/" + req.params.fileName;
+app.post('/api/delete',function(req, res) {
+    try {
+        auth(req.body.username, req.body.password)
+    } catch (e) {
+        res.status(401).send("Unauthorized");
+        return;
+    }
+
+    const fileParts = req.body.file.split("/");
+    const filePath = __dirname + "/uploads/" + fileParts[fileParts.length - 1];
 
     if (fs.existsSync(filePath)) {
         fs.unlink(filePath, (err) => {
@@ -76,7 +94,7 @@ app.listen(PORT, function(){
     console.log("Working on port " + PORT);
 });
 
-const auth = (user, pass, res) => {
+const auth = (user, pass) => {
     if (!process.env.SHARE_USER || !process.env.SHARE_PASSWORD) {
         throw Error("USER OR PASSWORD NOT SET");
     }
