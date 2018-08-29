@@ -4,7 +4,7 @@ const app = express();
 const fs = require('fs');
 
 const PORT = process.env.SHARE_PORT || 3000;
-const HOSTNAME = process.env.SHARE_HOSTNAME || `http://localhost:${PORT}/`;
+const HOSTNAME = process.env.SHARE_HOST || `http://localhost:${PORT}/`;
 
 const uuid = () => {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
