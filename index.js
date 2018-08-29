@@ -11,46 +11,56 @@ app.use(bodyParser.json());
 
 const PORT = process.env.SHARE_PORT || 3000;
 const HOSTNAME = process.env.SHARE_HOST || `http://localhost:${PORT}/`;
+const MAX_FILE_SIZE = process.env.SHARE_MAX_SIZE || 50000000; // 50mb;
 
 const uuid = () => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
     });
 }
 
 const storage = multer.diskStorage({
-  destination: function (req, file, callback) {
-    callback(null, './uploads');
-  },
+    destination: function (req, file, callback) {
+        callback(null, './uploads');
+    },
 
-  filename: function (req, file, callback) {
-    try {
-        auth (req.body.username, req.body.password);
-    } catch (error) {
-        callback(error, null);
+    filename: function (req, file, callback) {
+        const fileParts = file.originalname.split(".");
+        const ext = fileParts[fileParts.length - 1];
+
+        const fileName = Buffer.from(uuid()).toString('base64').slice(0, 13);
+        callback(null, fileName + "." + ext);
     }
-
-    const fileParts = file.originalname.split(".");
-    const ext = fileParts[fileParts.length - 1];
-
-    const fileName = Buffer.from(uuid()).toString('base64').slice(0, 13);
-    callback(null, fileName + "." + ext);
-  }
 });
 
+const fileAuth = (req, file, cb) => {
+    try {
+        auth(req.body.username, req.body.password);
+        cb(null, true);
+    } catch (error) {
+        cb(error, false);
+    }
+}
 
-const upload = multer({ storage : storage}).single('file');
+const upload = multer(
+    {
+        storage: storage,
+        fileFilter: fileAuth,
+        limits: {
+            fileSize: MAX_FILE_SIZE
+        }
+    }).single('file');
 
-app.get('/',function(req,res){
+app.get('/', function (req, res) {
     res.sendFile(__dirname + "/index.html");
 });
 
-app.get('/delete',function(req,res){
+app.get('/delete', function (req, res) {
     res.sendFile(__dirname + "/delete.html");
 });
 
-app.get('/uploads/:fileName', function(req, res) {
+app.get('/uploads/:fileName', function (req, res) {
     const filePath = __dirname + "/uploads/" + req.params.fileName;
     if (fs.existsSync(filePath)) {
         res.sendFile(filePath);
@@ -59,7 +69,7 @@ app.get('/uploads/:fileName', function(req, res) {
     }
 });
 
-app.post('/api/delete',function(req, res) {
+app.post('/api/delete', function (req, res) {
     try {
         auth(req.body.username, req.body.password)
     } catch (e) {
@@ -81,8 +91,8 @@ app.post('/api/delete',function(req, res) {
     }
 });
 
-app.post('/api/upload', function(req, res) {
-    upload(req, res, function(err) {
+app.post('/api/upload', function (req, res) {
+    upload(req, res, function (err) {
         if (err) {
             return res.end("Error uploading file." + err);
         }
@@ -90,7 +100,7 @@ app.post('/api/upload', function(req, res) {
     });
 });
 
-app.listen(PORT, function(){
+app.listen(PORT, function () {
     console.log("Working on port " + PORT);
 });
 
