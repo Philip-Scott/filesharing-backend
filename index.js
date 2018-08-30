@@ -11,7 +11,7 @@ app.use(bodyParser.json());
 
 const PORT = process.env.SHARE_PORT || 3000;
 const HOSTNAME = process.env.SHARE_HOST || `http://localhost:${PORT}/`;
-const MAX_FILE_SIZE = process.env.SHARE_MAX_SIZE || 50000000; // 50mb;
+const MAX_FILE_SIZE = Number(process.env.SHARE_MAX_SIZE) || 50000000; // 50mb;
 
 const uuid = () => {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -67,6 +67,10 @@ app.get('/uploads/:fileName', function (req, res) {
     } else {
         res.status(404).send('Not found');
     }
+});
+
+app.get('/api/*', function (req, res) {
+    res.redirect('/');
 });
 
 app.post('/api/delete', function (req, res) {
