@@ -100,6 +100,10 @@ app.post('/api/upload', function (req, res) {
         if (err) {
             return res.end("Error uploading file." + err);
         }
+        if (!req.file) {
+            return res.end ("No file uploaded...");
+        }
+
         res.end(HOSTNAME + req.file.path);
     });
 });
