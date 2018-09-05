@@ -1,8 +1,10 @@
 const express = require("express");
 const multer = require('multer');
-var bodyParser = require('body-parser');
+const bodyParser = require('body-parser');
 const app = express();
 const fs = require('fs');
+
+require('dotenv').config();
 
 app.use(bodyParser.urlencoded({
     extended: true
